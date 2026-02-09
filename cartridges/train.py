@@ -54,7 +54,7 @@ class GenerationEvalConfig(BaseConfig):
     generate_max_new_tokens: int = 128
     dataloader_num_workers: int = 0
     num_samples: int = 1  # Number of generations per prompt
-    num_samples_final: Optional[int] = None # # Number of generations per prompt after finishing training
+    num_samples_final: Optional[int] = None # Number of generations per prompt after finishing training
     temperature: float = 0.0
     batch_size: int = 1
     override_max_tokens: int | None = None
