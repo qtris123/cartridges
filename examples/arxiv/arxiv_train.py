@@ -33,6 +33,7 @@ config = TrainConfig(
         top_k_logits=20,
         packed_seq_length=2048,
         packing_mode="truncate",
+        max_train_samples=10000
     ),
 
     loss_eval_every_n_steps=16,

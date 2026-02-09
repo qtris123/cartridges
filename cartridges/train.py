@@ -113,6 +113,7 @@ class TrainConfig(RunConfig):
     max_optimizer_steps: int = -1
 
     seed: int = 42
+    max_train_samples: Optional[int] = None  # Limit number of training samples per epoch (None = all)
 
     log_logprob_viz: bool = False
 
@@ -217,11 +218,22 @@ def train(config: TrainConfig):
 
     if is_ddp:
 
+        # Limit training samples if max_train_samples is set
+        num_train_samples = len(dataset) if config.max_train_samples is None else min(config.max_train_samples, len(dataset))
+        
         train_sampler = DistributedSampler(
             dataset,
+            num_replicas=dist.get_world_size(),
+            rank=dist.get_rank(),
             shuffle=True,
             seed=config.seed,
         )
+        # Manually set the number of samples per replica
+        train_sampler.num_samples = num_train_samples // dist.get_world_size()
+        train_sampler.total_size = train_sampler.num_samples * dist.get_world_size()
+        
+        if config.max_train_samples is not None:
+            logger.info(f"Limiting training to {num_train_samples} total samples ({train_sampler.num_samples} per GPU)")
 
         logger.info("Wrapping model in DDP")
         logger.info(f"local_rank: {local_rank}")
@@ -230,12 +242,18 @@ def train(config: TrainConfig):
     else:
         # SE (04/17): We need to set a seed for the random sampler so that the 
         # results are reproducible with or without DDP
+        # Limit training samples if max_train_samples is set
+        num_train_samples = config.max_train_samples if config.max_train_samples is not None else None
+        
         train_sampler = torch.utils.data.RandomSampler(
             dataset,
             replacement=False,
-            num_samples=None,
+            num_samples=num_train_samples,
             generator=torch.Generator().manual_seed(config.seed),
         )
+        
+        if config.max_train_samples is not None:
+            logger.info(f"Limiting training to {config.max_train_samples} samples")
 
     dataloader = DataLoader(
         dataset, 
@@ -243,7 +261,7 @@ def train(config: TrainConfig):
         # our dataset already handles batching, so we force the batch size to 1
         # and extract it in the collate. We still use the dataloader to leverage
         # a single worker to avoid blocking the main process
-        batch_size=1, 
+        batch_size=1,  # __getitem__() and _prepare_batches() in class TrainDataset in datasets.py handles batching
         collate_fn=lambda x: x[0], 
         num_workers=0, 
     )
