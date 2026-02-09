@@ -45,6 +45,7 @@ logger = get_logger(__name__)
 class LossEvalConfig(BaseConfig):
     dataset: LossEvalDataset.Config | TrainDataset.Config
     name_for_wandb: str
+    max_eval_samples: Optional[int] = None  # Limit number of samples to evaluate (None = all)
 
 class GenerationEvalConfig(BaseConfig):
     dataset: GenerateEvalDataset.Config
@@ -52,11 +53,12 @@ class GenerationEvalConfig(BaseConfig):
     name_for_wandb: str
     generate_max_new_tokens: int = 128
     dataloader_num_workers: int = 0
-    num_samples: int = 1
-    num_samples_final: Optional[int] = None
+    num_samples: int = 1  # Number of generations per prompt
+    num_samples_final: Optional[int] = None # # Number of generations per prompt after finishing training
     temperature: float = 0.0
     batch_size: int = 1
     override_max_tokens: int | None = None
+    max_eval_samples: Optional[int] = None  # Limit number of prompts to evaluate (None = all)
 
 
 class TrainConfig(RunConfig):
@@ -243,7 +245,7 @@ def train(config: TrainConfig):
         # a single worker to avoid blocking the main process
         batch_size=1, 
         collate_fn=lambda x: x[0], 
-        num_workers=1, 
+        num_workers=0, 
     )
 
     optimizer = optim.Adam(
@@ -342,20 +344,19 @@ def train(config: TrainConfig):
             batch: DatasetBatch
             do_step = (iter_idx + 1) % accumulate_grad_steps == 0
 
-            if (
+            if (False and
                 config.loss_eval_every_n_steps is not None
                 and optimizer_step % config.loss_eval_every_n_steps == 0
-                and iter_idx % accumulate_grad_steps
-                == 0  # only on the first batch of each optimizer step
+                and iter_idx % accumulate_grad_steps == 0  # only on the first batch of each optimizer step
             ):
                 do_evaluation()
 
             
-            if (
+            if (False and
                 config.generate_eval_every_n_steps is not None
                 and optimizer_step % config.generate_eval_every_n_steps == 0
                 and iter_idx % accumulate_grad_steps == 0
-                and (config.generate_before_training or iter_idx > 0)
+                and (config.generate_before_training_or_iter_idx > 0)
             ):
                 do_evaluate_generations(step=iter_idx)
 
@@ -563,7 +564,13 @@ def evaluate_perplexity(
         epoch_num_assistant_tokens = torch.tensor(0, device="cuda")
         epoch_num_elements = torch.tensor(0, device="cuda")
 
+        num_batches_processed = 0
         for batch in dataloader_pbar:
+            # Limit evaluation samples if max_eval_samples is set
+            if ds_config.max_eval_samples is not None and num_batches_processed >= ds_config.max_eval_samples:
+                logger.info(f"Reached max_eval_samples limit ({ds_config.max_eval_samples}), stopping evaluation")
+                break
+            num_batches_processed += 1
             batch: DatasetBatch
             with torch.amp.autocast(device_type="cuda", dtype=torch.bfloat16):
                 outputs = model(
@@ -685,8 +692,16 @@ def evaluate_generations(
 
     batch_size = config.batch_size
     indexes = list(range(len(dataset)))
+    
+    # Limit number of prompts to evaluate if max_eval_samples is set
+    # Apply BEFORE DDP splitting so the limit is total across all ranks
+    if config.max_eval_samples is not None:
+        indexes = indexes[:config.max_eval_samples]
+        logger.info(f"Limiting generation eval to {config.max_eval_samples} total prompts from dataset")
+    
     if is_ddp:
         indexes = indexes[local_rank::world_size]
+        logger.info(f"DDP rank {dist.get_rank()}: processing {len(indexes)} prompts")
 
     results = []
     for batch_start in tqdm(
@@ -695,7 +710,8 @@ def evaluate_generations(
         leave=False,
         disable=not is_rank_zero,
     ):
-        for sample_idx in range(num_samples):
+        # number of generations to create per evaluation prompt => usefel for measuring diversity/consistency of model outputs 
+        for sample_idx in range(num_samples): # for now, num_samples is set to 1
             logger.info(f"Generating sample {sample_idx} of {num_samples}")
 
             elements = [

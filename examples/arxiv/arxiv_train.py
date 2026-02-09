@@ -4,15 +4,15 @@ import pydrantic
 
 from cartridges.initialization import KVFromText
 from cartridges.train import TrainConfig, LossEvalConfig, GenerationEvalConfig
-from cartridges.models import HFModelConfig, FlexQwen3ForCausalLM
+from cartridges.models import HFModelConfig, FlexQwen3ForCausalLM, FlexLlamaForCausalLM
 from cartridges.datasets import DataSource, GenerateEvalDataset, TrainDataset, LossEvalDataset
 
 
 
 config = TrainConfig(
     model=HFModelConfig(
-        pretrained_model_name_or_path="Qwen/Qwen3-4b",
-        model_cls=FlexQwen3ForCausalLM,
+        pretrained_model_name_or_path="meta-llama/llama-3.2-1B-Instruct",
+        model_cls=FlexLlamaForCausalLM,
     ),
     kv_cache_initializer=KVFromText.Config(
         text_source=os.path.join(os.environ["CARTRIDGES_DIR"], "examples/arxiv/cartridges.tex"),
@@ -28,7 +28,7 @@ config = TrainConfig(
             # TODO: replace below with your own dataset you just synthesized and 
             # remove our huggingface dataset below
             # DataSource(path="path/to/your/dataset.parquet", type="local"),    
-            DataSource(path="hazyresearch/arxiv_synthesize_qwen-qwen3-4b_n8192-0", type="hf"),
+            DataSource(path="/scratch/scholar/vo43/train.parquet", type="local"),
         ],
         top_k_logits=20,
         packed_seq_length=2048,
@@ -40,12 +40,13 @@ config = TrainConfig(
         LossEvalConfig(
             dataset=LossEvalDataset.Config(
                 data_source=DataSource(
-                    path="hazyresearch/arxiv_synthesize_eval_gpt-5-mini-2025-08-07_n32-0",
-                    type="hf",
+                    path="/scratch/scholar/vo43/train_eval.parquet",
+                    type="local",
                 ),
                 packed_seq_length=2048,
             ),
             name_for_wandb="arxiv_synthesize",
+            max_eval_samples=1000
         )
     ],
 
@@ -54,12 +55,13 @@ config = TrainConfig(
         GenerationEvalConfig(
             dataset=GenerateEvalDataset.Config(
                 data_source=DataSource(
-                    path="hazyresearch/arxiv_synthesize_eval_gpt-5-mini-2025-08-07_n32-0",
-                    type="hf",
+                    path="/scratch/scholar/vo43/train_eval.parquet",
+                    type="local",
                 ),
             ),
             name_for_wandb="arxiv-train",
-            batch_size=16
+            batch_size=16,
+            max_eval_samples=1000
         )
     ],
     distributed_backend="gloo",
