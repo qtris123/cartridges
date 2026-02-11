@@ -131,6 +131,13 @@ class LongHealthMultipleChoiceGenerateDataset(GenerateEvalDataset):
         ]
 
         pred_match = re.search(r'<answer>(.*?)</answer>', pred, re.DOTALL)
+        if not pred_match:
+            pred_match = re.search(
+                r'\{answer\}\s*\n\s*([^\n]+)',
+                pred,
+                re.IGNORECASE
+            )
+
         if pred_match:
             extracted_pred = pred_match.group(1).strip().lower()
 

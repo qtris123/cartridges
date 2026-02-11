@@ -106,14 +106,14 @@ class TrainConfig(RunConfig):
     # processed, which is given by `iter_idx`.
     save_every_n_steps: Optional[int] = 512
     save_after_training: bool = True
-    keep_last_n_saved: int = 1
+    keep_last_n_saved: int = 5
     save_to_wandb: bool = True
     log_time: bool = False
 
     max_optimizer_steps: int = -1
 
     seed: int = 42
-    max_train_samples: Optional[int] = None  # Limit number of training samples per epoch (None = all)
+    max_train_batches: Optional[int] = None  # Limit number of training batches per epoch (None = all)
 
     log_logprob_viz: bool = False
 
@@ -151,10 +151,18 @@ def train(config: TrainConfig):
     logger.info(f"Num devices: {num_devices}")
 
     logger.info(f"Train outputs will be saved to {config.run_dir}")
-    tokenizer = AutoTokenizer.from_pretrained(config.model.pretrained_model_name_or_path)    
-
+    tokenizer = AutoTokenizer.from_pretrained(config.model.pretrained_model_name_or_path)
+    
     t0 = time.time()
     dataset = config.dataset.instantiate(tokenizer=tokenizer, seed=config.seed)
+    
+    # Limit training dataset if max_train_batches is set
+    if config.max_train_batches is not None:
+        num_batches = min(config.max_train_batches, len(dataset))
+        dataset = torch.utils.data.Subset(dataset, range(num_batches))
+        logger.info(f"Limiting training dataset to {len(dataset)} batches (max_train_batches={config.max_train_batches})")
+    else:
+        logger.info(f"Training dataset size: {len(dataset)} batches")
     logger.info(
         f"Fininshed loading training dataset from disk, took {(time.time() - t0):.3}s"
     )
@@ -218,22 +226,11 @@ def train(config: TrainConfig):
 
     if is_ddp:
 
-        # Limit training samples if max_train_samples is set
-        num_train_samples = len(dataset) if config.max_train_samples is None else min(config.max_train_samples, len(dataset))
-        
         train_sampler = DistributedSampler(
             dataset,
-            num_replicas=dist.get_world_size(),
-            rank=dist.get_rank(),
             shuffle=True,
             seed=config.seed,
         )
-        # Manually set the number of samples per replica
-        train_sampler.num_samples = num_train_samples // dist.get_world_size()
-        train_sampler.total_size = train_sampler.num_samples * dist.get_world_size()
-        
-        if config.max_train_samples is not None:
-            logger.info(f"Limiting training to {num_train_samples} total samples ({train_sampler.num_samples} per GPU)")
 
         logger.info("Wrapping model in DDP")
         logger.info(f"local_rank: {local_rank}")
@@ -242,18 +239,12 @@ def train(config: TrainConfig):
     else:
         # SE (04/17): We need to set a seed for the random sampler so that the 
         # results are reproducible with or without DDP
-        # Limit training samples if max_train_samples is set
-        num_train_samples = config.max_train_samples if config.max_train_samples is not None else None
-        
         train_sampler = torch.utils.data.RandomSampler(
             dataset,
             replacement=False,
-            num_samples=num_train_samples,
+            num_samples=None,
             generator=torch.Generator().manual_seed(config.seed),
         )
-        
-        if config.max_train_samples is not None:
-            logger.info(f"Limiting training to {config.max_train_samples} samples")
 
     dataloader = DataLoader(
         dataset, 
@@ -370,12 +361,13 @@ def train(config: TrainConfig):
                 do_evaluation()
 
             
-            if (False and
+            if (
                 config.generate_eval_every_n_steps is not None
                 and optimizer_step % config.generate_eval_every_n_steps == 0
                 and iter_idx % accumulate_grad_steps == 0
-                and (config.generate_before_training_or_iter_idx > 0)
+                and (config.generate_before_training or iter_idx > 0)
             ):
+                logger.info(f"Generation evluation at step {iter_idx}")
                 do_evaluate_generations(step=iter_idx)
 
             # SE (05/02): We are careful to only reduce the loss across processes
@@ -405,7 +397,7 @@ def train(config: TrainConfig):
                         batch.topk_token_ids.to(local_rank)
                     ] 
 
-                    # ce is sum -p(x)logq(x), where p is the true distr and q is the model distr
+                    # ce is sum -p(x)logq(x), where p is the true distr and q is the model distr #self-study
                     ce_by_token = (
                         -batch.topk_logprobs.to(local_rank).exp()  # p(x), true distr
                         * topk_pred_logprobs  # q(x), model distr
@@ -507,11 +499,6 @@ def train(config: TrainConfig):
                 accum_loss = 0.0
                 accum_num_input_tokens, accum_num_target_tokens = 0, 0
 
-    # We do a final evaluation and generation after training.
-    # This is also useful for doing evaluation of a pretrained model without training
-    do_evaluation()
-    do_evaluate_generations(final=True)
-
     if config.save_after_training and is_rank_zero:
         if cache_tuning:
             save_cache(config, cache, optimizer_step=optimizer_step)
@@ -520,6 +507,11 @@ def train(config: TrainConfig):
             logger.info(f"Saving PEFT model to {config.run_dir}/peft_model")
             model.save_pretrained(f"{config.run_dir}/peft_model")
     
+    # We do a final evaluation and generation after training.
+    # This is also useful for doing evaluation of a pretrained model without training
+    do_evaluation()
+    do_evaluate_generations(final=True)
+
     logger.info(f"Done training waiting for final barrier.")
 
     # SE (03/21): Careful to synchronize all processes before finishing in case
