@@ -46,10 +46,10 @@ class QASPERResource(Resource):
     def __init__(self, config: Config):
         self.config = config
 
-        dataset = load_dataset("allenai/qasper", split="train")
+        dataset = load_dataset("allenai/qasper", split="train", revision="refs/convert/parquet")
         df = dataset.to_pandas()
 
-        paper_ids = TOPIC_TO_IDS[self.topic]
+        paper_ids = TOPIC_TO_IDS[self.config.topic]
         df = df[df["id"].isin(paper_ids)]
         assert len(df) == len(paper_ids)
 
@@ -77,7 +77,7 @@ class QASPERResource(Resource):
         paper: Paper = random.choice(self.papers)
         num_sections_per_paper = random.randint(1, len(paper.sections))
         sections = random.sample(paper.sections, num_sections_per_paper)
-        sections_str = "\n".join([section.to_string for section in sections])
+        sections_str = "\n".join([section.text for section in sections]) # section.tostring -> section.text
 
         section_divider = f"\n---Paper Title: {paper.title}---\n"
         context = PAPER_TEMPLATE.format(
