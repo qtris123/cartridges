@@ -1,0 +1,52 @@
+==========================================
+Qasper Synthesis with Tokasaurus Server
+==========================================
+JobID=423019
+Partition=scholar-gpu
+NodeList=scholar-j002
+Started at: Wed Feb 18 10:37:02 PM EST 2026
+
+Checking GPU settings...
+Wed Feb 18 22:37:02 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 575.57.08              Driver Version: 575.57.08      CUDA Version: 12.9     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A40                     Off |   00000000:3B:00.0 Off |                    0 |
+|  0%   40C    P8             22W /  300W |       0MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+|   1  NVIDIA A40                     Off |   00000000:AF:00.0 Off |                    0 |
+|  0%   40C    P8             22W /  300W |       0MiB /  46068MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
+   Priority=116689 Nice=0 Account=gpu QOS=normal
+   Partition=scholar-gpu AllocNode:Sid=scholar-fe01:1532182
+   ReqTRES=cpu=4,mem=64G,node=1,billing=4,gres/gpu=2
+   AllocTRES=cpu=6,mem=64G,node=1,billing=6,gres/gpu=2
+
+Activating cartridges conda environment...
+Python: /home/vo43/.conda/envs/cartridges/bin/python3
+
+Loading GCC 11.4...
+GCC version: gcc (GCC) 11.5.0 20240719 (Red Hat 11.5.0-5)
+
+Loading CUDA module...
+CUDA version: Cuda compilation tools, release 12.6, V12.6.20
+
+Starting synthesis with integrated server management...
+
+
+Cleaning up...
+Job finished at: Wed Feb 18 10:37:38 PM EST 2026
