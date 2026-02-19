@@ -96,7 +96,7 @@ class QASPERResource(Resource):
         out = f"Below is a panel of scientific papers."
         for paper in self.papers:
             out += "\n\n"
-            out += f"<paper>\n{paper.to_string()}\n</paper>\n"
+            out += f"<paper>\n{paper.to_string}\n</paper>\n"
         return out
         
 
