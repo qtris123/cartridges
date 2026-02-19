@@ -138,6 +138,12 @@ def evaluate_toka_config(
         # Build the command arguments from TokaConfig
         toka_cmd = ["toka"]
         
+        # Fields that should not be passed to the toka CLI
+        # (these are config-only fields not supported by tokasaurus CLI)
+        excluded_fields = {
+            'wandb_enabled', 'wandb_entity', 'wandb_project', 'wandb_run_name'
+        }
+        
         # Special handling for fields that need custom formatting
         special_fields = {
             'kv_cache_num_tokens': f"{toka_config.kv_cache_num_tokens}",
@@ -145,6 +151,10 @@ def evaluate_toka_config(
         }
         
         for field_name, field_value in toka_config.__dict__.items():
+            # Skip excluded fields that are not supported by toka CLI
+            if field_name in excluded_fields:
+                continue
+            
             # Skip None values for optional fields
             if field_value is None:
                 continue
