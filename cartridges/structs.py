@@ -66,23 +66,48 @@ class Conversation:
     
     @staticmethod
     def from_dict(row: dict) -> Conversation:
-        return Conversation(
-            messages=[
-                Conversation.Message(
-                    content=message["content"],
-                    role=message["role"],
-                    token_ids=message["token_ids"],
-                    top_logprobs=(
-                        FlatTopLogprobs(**message["top_logprobs"]) 
-                        if message["top_logprobs"] is not None else None
-                    )
-                ) 
-                for message in row["messages"]
-            ],
-            system_prompt=row["system_prompt"],
-            metadata=row["metadata"],
-            type=row["type"],
-        )
+        if "messages" not in row: # deal with data format returned by data/qasper/rewrite.py (it doesn't have "messages", "token_ids" or "top_logprobs")
+            conversations = []
+            for _, row in row.iterrows():
+                convo = Conversation(
+                    messages=[
+                        Conversation.Message(
+                            role="user",
+                            content=PROMPT.format(question=row["question"]),
+                    token_ids=None,
+                        ),
+                        Conversation.Message(
+                            role="assistant",
+                            content=f"<answer>\n{row['answer']}\n</answer>",
+                            token_ids=None,
+                        ),
+                    ],
+                    system_prompt="",
+                    metadata={
+                        "paper_id": row["paper_id"],
+                        "title": row["title"],
+                    },
+                )
+                conversations.append(convo)
+            return conversations
+        else:
+            return Conversation(
+                messages=[
+                    Conversation.Message(
+                        content=message["content"],
+                        role=message["role"],
+                        token_ids=message["token_ids"],
+                        top_logprobs=(
+                            FlatTopLogprobs(**message["top_logprobs"]) 
+                            if message["top_logprobs"] is not None else None
+                        )
+                    ) 
+                    for message in row["messages"]
+                ],
+                system_prompt=row["system_prompt"],
+                metadata=row["metadata"],
+                type=row["type"],
+            )
 
 def write_conversations(conversations: list[Conversation], path: str):
     path_str = str(path)
