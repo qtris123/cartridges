@@ -185,3 +185,11 @@ scratch/ryan/wandb
 secrets/
 
 ignore/
+
+credentials.txt
+
+explore.ipynb   
+
+cartridges.slurm
+cartridges.err
+cartridges.out
