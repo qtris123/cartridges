@@ -353,7 +353,7 @@ def train(config: TrainConfig):
             batch: DatasetBatch
             do_step = (iter_idx + 1) % accumulate_grad_steps == 0
 
-            if (False and
+            if (
                 config.loss_eval_every_n_steps is not None
                 and optimizer_step % config.loss_eval_every_n_steps == 0
                 and iter_idx % accumulate_grad_steps == 0  # only on the first batch of each optimizer step
@@ -899,7 +899,7 @@ class CosWithWarmup(Scheduler):
         eta_min = initial_lr * self.config.alpha_f
         if step < self.config.warmup_steps:
             return self._linear_warmup(initial_lr, step, self.config.warmup_steps)
-        elif step >= max_steps:
+        elif max_steps is not None and step >= max_steps:
             return eta_min
         else:
             step = step - self.config.warmup_steps

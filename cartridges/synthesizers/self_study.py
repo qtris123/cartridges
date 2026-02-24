@@ -51,11 +51,11 @@ class SelfStudySynthesizer(AsyncConvoSynthesizer):
 
         max_rounds: int = 1
 
-        temperature_a: float = 0.6
+        temperature_a: float = 0.6 # 0.6 earlier, but since this is no-cot, Qwen3-4B suggests 0.7 
         max_completion_tokens_a: int = 512
         prob_thinking: float = 0.0
 
-        temperature_b: float = 0.0
+        temperature_b: float = 0.0 # for Qwen3-4B, it's warned not to use greedy decoding, but 0.6 - 0.7
         max_completion_tokens_b: int = 1024
 
         num_top_logprobs: Optional[int] = 20
@@ -69,7 +69,9 @@ class SelfStudySynthesizer(AsyncConvoSynthesizer):
     
         self.is_setup = False
 
-        random.seed(82)
+        # Store base seed for deterministic batch-specific seeding
+        # Each batch will use: random.seed(self.base_seed + batch_idx)
+        self.base_seed = 42000 # > 1 + 1024 + 10240 + 30720# Accumulated seeds: 1, 1025, 10241, 40961
     
     async def setup(self):
         tools_list, cleanup_tasks = await instantiate_tools(self.config.tools)
@@ -100,6 +102,10 @@ class SelfStudySynthesizer(AsyncConvoSynthesizer):
     async def sample_convos(
         self, batch_idx: int, batch_size: int, total_batches: int
     ) -> list[Conversation]:
+        # Set batch-specific seed for deterministic but unique generation per batch
+        # This ensures: same batch_idx = same questions, different batch_idx = different questions
+        random.seed(self.base_seed + batch_idx)
+        
         batch_id = f"{batch_idx}"
 
         if not self.is_setup:

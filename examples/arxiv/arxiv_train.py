@@ -3,6 +3,7 @@ from pathlib import Path
 import pydrantic
 
 from cartridges.initialization import KVFromText
+from cartridges.train import CosWithWarmup
 from cartridges.train import TrainConfig, LossEvalConfig, GenerationEvalConfig
 from cartridges.models import HFModelConfig, FlexQwen3ForCausalLM, FlexLlamaForCausalLM
 from cartridges.datasets import DataSource, GenerateEvalDataset, TrainDataset, LossEvalDataset
@@ -13,12 +14,12 @@ from cartridges.data.mtob.evals import MTOBKalamangToEnglishGenerateDataset
 
 config = TrainConfig(
     model=HFModelConfig(
-        pretrained_model_name_or_path="meta-llama/llama-3.2-1B-Instruct",
+        pretrained_model_name_or_path="meta-llama/llama-3.2-3B-Instruct",
         model_cls=FlexLlamaForCausalLM,
     ),
     kv_cache_initializer=KVFromText.Config( # QASPER
         text_source="/home/vo43/cartridges/examples/qasper/qasper_context.txt",
-        max_tokens=8192 # p : the number of tokens to use for constructing the initial KV cache. 
+        max_tokens= 2048 # p : the number of tokens to use for constructing the initial KV cache. 
     ),
     # kv_cache_initializer=KVFromText.Config( # LongHealth
     #     text_source=os.path.join(os.environ["CARTRIDGES_DIR"], "examples/arxiv/longhealth_context.txt"),
@@ -29,22 +30,25 @@ config = TrainConfig(
     #     max_tokens=512  # p : the number of tokens to use for constructing the initial KV cache.
     # ),
     
-    lr=2e-2,
+    lr=2e-2, #OG: 2e-2
     epochs=1,
     global_batch_size=32, 
 
     dataset=TrainDataset.Config(
         data_sources=[
-            DataSource(path="/scratch/scholar/vo43/qasper_30720.parquet", type="local"),
+            DataSource(path="/scratch/scholar/vo43/qasper_65520.parquet", type="local"),
             #DataSource(path="/scratch/scholar/vo43/llama_0_mtob.parquet", type="local"),    
             #DataSource(path="/scratch/scholar/vo43/llama_0_longhealth.parquet", type="local"),
         ],
         top_k_logits=20,
-        packed_seq_length=2048,
+        packed_seq_length=2048, # figure 5 says they use 1024 instead, but their bsize is 64 and mine is 32 => so basically the same. I packed 2x more batches than theirs, and they use 2x more bsize than me.
         packing_mode="truncate",
     ),
-
-    #max_train_batches=1000,  # Limit training dataset to x batches per epoch. Because data.instantiate() returns dataset in batches => len(dataset) is the number of batches
+    # lr_scheduler=CosWithWarmup.Config( # 3B-3
+    #     warmup_steps=40,
+    #     max_steps=400,
+    # ),
+    #max_train_batches=100,  # Limit training dataset to x batches per epoch. Because data.instantiate() returns dataset in batches => len(dataset) is the number of batches
 
     # QASPER uses log perplexity as metric.
     loss_eval_every_n_steps=16,
@@ -52,7 +56,8 @@ config = TrainConfig(
         LossEvalConfig(
             dataset=LossEvalDataset.Config(
                 data_source=DataSource( #n128
-                    path="/home/vo43/cartridges/outputs/0_n128/7a282c8d-0eb6-4fa2-893a-6427f8e3d987/artifact/dataset.parquet",  # TODO: fill in path to QASPER eval .parquet
+                    #path="/home/vo43/cartridges/examples/arxiv/qasper_rewrite_eval.parquet", #qasper_gpt41_rewrite.parquet"
+                    path="/home/vo43/cartridges/outputs/0_n128/7a282c8d-0eb6-4fa2-893a-6427f8e3d987/artifact/dataset.parquet",
                     type="local",
                 ),
                 packed_seq_length=2048,
@@ -95,7 +100,7 @@ config = TrainConfig(
     distributed_backend="gloo",
 
     save_every_n_steps=500,
-    name="cartridges-qasper-8192",
+    name="cartridges-qasper-2048_n65520_3B",
 )
 
 

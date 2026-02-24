@@ -72,7 +72,7 @@ synthesize_config = SynthesizeConfig(
     ),
 
     # Generation settings
-    num_samples= 24000, #(128,) 1024, 10240, 30720
+    num_samples= 24560, #(128,) 1024, 10240, 30720
     batch_size=16,
     max_num_batches_in_parallel=64,
     
