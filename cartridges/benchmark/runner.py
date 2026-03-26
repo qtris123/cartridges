@@ -9,7 +9,7 @@ from typing import Optional
 
 import pandas as pd
 from pydantic import Field
-from pydrantic import RunConfig
+from pydrantic import BaseConfig, RunConfig
 
 from cartridges.clients.base import ClientConfig
 from cartridges.benchmark.datasets import BenchmarkItem, load_dataset_items
@@ -171,3 +171,177 @@ async def _run_benchmark(config: BenchmarkConfig):
         print(f"\nPer-subject breakdown (bottom 10):\n{breakdown.head(10).to_string()}")
 
     return df
+
+
+# ---------------------------------------------------------------------------
+# BenchmarkWithServerConfig — auto-launch a Tokasaurus server, then benchmark
+# ---------------------------------------------------------------------------
+
+class BenchmarkWithServerConfig(RunConfig):
+    """Launches a Tokasaurus server, patches the client URL, runs the
+    benchmark, then shuts the server down.  Same lifecycle pattern as
+    ``EvaluateTokaConfig`` in ``infra/tuning/tune_toka.py`` but for
+    ``BenchmarkConfig`` instead of ``SynthesizeConfig``.
+    """
+    benchmark: BenchmarkConfig
+    tokasaurus: "TokaServerConfig"
+    output_dir: str = Field(default=os.environ.get("CARTRIDGES_OUTPUT_DIR", "."))
+    conda_env: Optional[str] = None
+
+    def run(self):
+        _run_benchmark_with_server(self)
+
+
+class TokaServerConfig(BaseConfig):
+    """Mirrors ``TokaConfig`` from ``infra/tuning/tune_toka.py`` so the
+    benchmark module is self-contained.  All fields have the same names
+    as the ``toka`` CLI arguments."""
+
+    model: str
+    tokenizer: Optional[str] = None
+
+    trust_remote_code: bool = False
+    dtype: str = "bfloat16"
+    rope_scaling: Optional[str] = None
+
+    use_hydragen: bool = False
+    hydragen_min_group_size: int = 32
+    hydragen_min_prefix_len: int = 256
+
+    enable_chosen_logprobs: bool = True
+    max_topk_logprobs: Optional[int] = None
+
+    port: int = 10210
+    local_proc_name: str = "server"
+
+    log_level: str = "INFO"
+    log_procs: Optional[list[str]] = None
+    uvicorn_log_level: str = "info"
+
+    stats_report_seconds: float = 5.0
+    statsd_server_url: Optional[str] = None
+
+    page_size: int = 16
+    kv_cache_num_tokens: int = 1024 * 128
+
+    torch_compile: bool = False
+    async_tp_threshold: Optional[int] = None
+
+    max_tokens_per_forward: int = 8192
+    max_seqs_per_forward: int = 1024
+    prefill_round_up_multiple: int = 16
+
+    scheduling_steps_ahead: int = 8
+    stop_string_num_token_lookback: int = 5
+
+    dp_size: int = 1
+    pp_size: int = 1
+    tp_size: int = 1
+    pp_num_buffer_stages: int = 1
+
+    track_early_stopping: bool = True
+    early_stopping_buffer_size: int = 2048
+    early_stopping_num_prediction_buckets: int = 1024
+    early_stopping_initial_wait: int = 16
+    early_stopping_init_mean: Optional[float] = None
+    early_stopping_init_std: Optional[float] = None
+    max_num_tokens_per_request: Optional[int] = None
+
+    enable_precise_onboard: bool = True
+    precise_onboard_batch_size: int = 128
+    greedy_prefill: bool = True
+
+    use_spec_allocation: bool = True
+    spec_allocation_std_buffer_scale: float = 0.25
+    spec_allocation_target_kv_cache_utilization: float = 1.0
+
+    use_cudagraphs: bool = True
+    cudagraph_max_size: int = 128
+    cudagraph_step: int = 16
+    cudagraph_max_kv_indices_per_seq: int = 32768
+
+    allocator_sanity_checks: bool = False
+
+
+def _run_benchmark_with_server(config: BenchmarkWithServerConfig):
+    import socket
+    import subprocess
+    import requests as http_requests
+
+    _EXCLUDED_CLI_FIELDS = {
+        "wandb_enabled", "wandb_entity", "wandb_project", "wandb_run_name",
+        "run_dir", "output_dir", "run_id", "launch_id", "script_id",
+    }
+
+    def _is_port_in_use(port: int) -> bool:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            try:
+                s.bind(("localhost", port))
+                return False
+            except OSError:
+                return True
+
+    def _find_available_port(start: int) -> int:
+        port = start
+        while _is_port_in_use(port):
+            logger.info(f"Port {port} in use, trying {port + 1}")
+            port += 1
+        return port
+
+    toka = config.tokasaurus
+    port = _find_available_port(toka.port)
+
+    # Build CLI command
+    toka_cmd: list[str] = ["toka"]
+    for field_name, field_value in toka.__dict__.items():
+        if field_name in _EXCLUDED_CLI_FIELDS or field_value is None:
+            continue
+        if field_name == "port":
+            field_value = port
+        if field_name == "log_procs" and isinstance(field_value, list):
+            field_value = ",".join(field_value)
+        toka_cmd.append(f"{field_name}={field_value}")
+
+    if config.conda_env:
+        cmd = ["conda", "run", "--no-capture-output", "-n", config.conda_env] + toka_cmd
+    else:
+        cmd = toka_cmd
+
+    logger.info(f"Starting Tokasaurus server: {' '.join(cmd)}")
+    process = subprocess.Popen(cmd)
+
+    try:
+        # Wait for server readiness
+        logger.info(f"Waiting for server on port {port}...")
+        start_time = time.time()
+        timeout = 300
+        while time.time() - start_time < timeout:
+            try:
+                r = http_requests.get(f"http://localhost:{port}/ping", timeout=1.0)
+                if r.json().get("message") == "pong":
+                    logger.info("Tokasaurus server is ready!")
+                    break
+            except http_requests.RequestException:
+                pass
+            time.sleep(2)
+        else:
+            raise TimeoutError(f"Tokasaurus server failed to start within {timeout}s")
+
+        # Patch the benchmark client URL + model name to point at the launched server
+        from cartridges.clients.tokasaurus import TokasaurusClient
+
+        bench = config.benchmark.model_copy(deep=True)
+        if isinstance(bench.client, TokasaurusClient.Config):
+            bench.client.url = f"http://localhost:{port}"
+            bench.client.model_name = toka.model
+        bench.run_dir = config.run_dir
+        bench.run()
+    finally:
+        logger.info("Shutting down Tokasaurus server...")
+        process.terminate()
+        try:
+            process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+        logger.info("Tokasaurus server shut down")
