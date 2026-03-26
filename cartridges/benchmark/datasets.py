@@ -87,16 +87,16 @@ def _load_mmlu(
 
     items: list[BenchmarkItem] = []
     for subj in subsets:
-        ds_test = load_dataset(hf_name, subj, split=split, trust_remote_code=True)
+        ds_test = load_dataset(hf_name, subj, split=split)
 
         few_shot_examples: list[dict] = []
         if num_few_shot > 0:
             try:
-                ds_dev = load_dataset(hf_name, subj, split="dev", trust_remote_code=True)
+                ds_dev = load_dataset(hf_name, subj, split="dev")
                 few_shot_examples = list(ds_dev.select(range(min(num_few_shot, len(ds_dev)))))
             except Exception:
                 try:
-                    ds_val = load_dataset(hf_name, subj, split="validation", trust_remote_code=True)
+                    ds_val = load_dataset(hf_name, subj, split="validation")
                     few_shot_examples = list(ds_val.select(range(min(num_few_shot, len(ds_val)))))
                 except Exception:
                     logger.warning(f"No dev/validation split for {subj}, running zero-shot")
@@ -136,7 +136,7 @@ def _load_qasper(
     *,
     dataset_path: Optional[str] = None,
     subset: Optional[str] = None,
-    split: str = "test",
+    split: str = "question",
     num_few_shot: int = 0,
     prompt_template: Optional[str] = None,
     seed: int = 42,
@@ -150,21 +150,11 @@ def _load_qasper(
     from datasets import load_dataset
 
     hf_name = dataset_path or "qtris123/qtris123qasper-rewrite-gpt-4.1-MT-task"
-    hf_split = subset or "question"
+    hf_split = "question"
     template = prompt_template or _QASPER_PROMPT
 
-    try:
-        ds = load_dataset(hf_name, split=hf_split, trust_remote_code=True)
-    except Exception:
-        logger.warning(
-            f"Could not load rewritten QASPER dataset '{hf_name}' split='{hf_split}'. "
-            "Falling back to allenai/qasper raw format."
-        )
-        return _load_qasper_raw(
-            dataset_path="allenai/qasper",
-            split=split,
-            prompt_template=template,
-        )
+   
+    ds = load_dataset(hf_name, split=hf_split)
 
     items: list[BenchmarkItem] = []
     for row in ds:
@@ -185,14 +175,29 @@ def _load_qasper(
 
 def _load_qasper_raw(
     *,
-    dataset_path: str = "allenai/qasper",
-    split: str = "test",
+    dataset_path: str = "qtris123/qtris123qasper-rewrite-gpt-4.1-MT-task",
+    split: str = "question",
     prompt_template: str,
 ) -> list[BenchmarkItem]:
-    """Fallback loader for the raw allenai/qasper format."""
+    """Fallback loader for the raw allenai/qasper format.
+
+    Note: allenai/qasper is a script-based dataset and requires
+    ``datasets < 3.0``.  With newer versions of the library this
+    fallback will fail gracefully.
+    """
     from datasets import load_dataset
 
-    ds = load_dataset(dataset_path, split=split, trust_remote_code=True)
+    try:
+        ds = load_dataset(dataset_path, split=split)
+    except RuntimeError as e:
+        if "scripts are no longer supported" in str(e):
+            raise RuntimeError(
+                f"Cannot load '{dataset_path}' because it uses a loading script "
+                f"which is unsupported in datasets >= 3.0. Either use the rewritten "
+                f"QASPER dataset (qtris123/qtris123qasper-rewrite-gpt-4.1-MT-task) "
+                f"or downgrade: pip install 'datasets<3'."
+            ) from e
+        raise
 
     items: list[BenchmarkItem] = []
     for paper in ds:
@@ -318,7 +323,7 @@ def _load_hellaswag(
     from datasets import load_dataset
 
     hf_name = dataset_path or "Rowan/hellaswag"
-    ds = load_dataset(hf_name, split=split, trust_remote_code=True)
+    ds = load_dataset(hf_name, split=split)
 
     template = prompt_template or (
         "Pick the most plausible continuation of the following text.\n\n"
@@ -360,7 +365,7 @@ def _load_truthfulqa(
 
     hf_name = dataset_path or "truthfulqa/truthful_qa"
     cfg = subset or "multiple_choice"
-    ds = load_dataset(hf_name, cfg, split=split, trust_remote_code=True)
+    ds = load_dataset(hf_name, cfg, split=split)
 
     template = prompt_template or "Answer the following question truthfully.\n\n{question}"
 
