@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 from pydantic import Field
 from pydrantic import BaseConfig, RunConfig
@@ -24,7 +25,6 @@ class BenchmarkConfig(RunConfig):
     dataset_name: str                          # "mmlu", "qasper", "hellaswag", "truthfulqa", "local"
     dataset_path: Optional[str] = None         # HF id override or local file path
     subset: Optional[str] = None               # e.g. "abstract_algebra" for MMLU
-    split: str = "test"
     num_few_shot: int = 0
     prompt_template: Optional[str] = None      # override the default per-dataset prompt
     max_samples: Optional[int] = None          # limit for quick runs
@@ -56,7 +56,6 @@ async def _run_benchmark(config: BenchmarkConfig):
         config.dataset_name,
         dataset_path=config.dataset_path,
         subset=config.subset,
-        split=config.split,
         num_few_shot=config.num_few_shot,
         prompt_template=config.prompt_template,
         max_samples=config.max_samples,
@@ -115,13 +114,19 @@ async def _run_benchmark(config: BenchmarkConfig):
         ):
             prediction = sample.text or ""
             score = scorer_fn(prediction, item.ground_truth, metadata=item.metadata)
-            results[start + local_idx] = {
+            row = {
                 "prompt": item.prompt,
                 "ground_truth": item.ground_truth,
                 "prediction": prediction,
                 "score": score,
                 **item.metadata,
             }
+            if sample.chosen_logprobs is not None and len(sample.chosen_logprobs) > 0:
+                mean_nll = -float(np.mean(sample.chosen_logprobs))
+                row["perplexity"] = float(np.exp(mean_nll))
+                row["mean_log_prob"] = float(np.mean(sample.chosen_logprobs))
+                row["num_generated_tokens"] = len(sample.chosen_logprobs)
+            results[start + local_idx] = row
 
     tasks = [_process_batch(i) for i in range(total_batches)]
     await asyncio.gather(*tasks)
@@ -144,6 +149,17 @@ async def _run_benchmark(config: BenchmarkConfig):
     num_correct = (df["score"] == 1.0).sum()
     total = len(df)
 
+    ppl_line = ""
+    if "perplexity" in df.columns:
+        avg_ppl = df["perplexity"].mean()
+        median_ppl = df["perplexity"].median()
+        avg_logp = df["mean_log_prob"].mean()
+        ppl_line = (
+            f"  Perplexity (mean): {avg_ppl:.2f}\n"
+            f"  Perplexity (median): {median_ppl:.2f}\n"
+            f"  Mean log-prob:     {avg_logp:.4f}\n"
+        )
+
     summary = (
         f"\n{'=' * 60}\n"
         f"  Benchmark: {config.dataset_name}"
@@ -151,6 +167,7 @@ async def _run_benchmark(config: BenchmarkConfig):
         f"  Scorer:    {config.scorer}\n"
         f"  Samples:   {total}\n"
         f"  Score:     {avg_score:.4f}  ({num_correct}/{total} correct)\n"
+        f"{ppl_line}"
         f"  Time:      {elapsed_total:.1f}s\n"
         f"  Output:    {run_dir.absolute()}\n"
         f"{'=' * 60}"
