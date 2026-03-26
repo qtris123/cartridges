@@ -23,7 +23,7 @@ class Resource(abc.ABC):
         pass
     
     @abc.abstractmethod
-    async def sample_prompt(self, batch_size: int) -> tuple[str, List[str]]: # sample with replacement
+    async def sample_prompt(self, batch_size: int) -> tuple[str, List[str]]:
         raise NotImplementedError()
     
     
@@ -306,7 +306,7 @@ SEED_PROMPT_REGISTRY: dict[SEED_TYPES, Callable] = {
 }
 
 def sample_seed_prompts(seed_types: List[SEED_TYPES], batch_size: int) -> List[str]:
-    seed_types = random.choices(seed_types, k=batch_size) # sample with replacement
+    seed_types = random.choices(seed_types, k=batch_size)
     return [SEED_PROMPT_REGISTRY[seed_type]() for seed_type in seed_types]
 
 # --- end generators for 

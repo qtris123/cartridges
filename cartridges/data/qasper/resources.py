@@ -9,24 +9,60 @@ from cartridges.data.resources import Resource, sample_seed_prompts, SEED_TYPES
 
 
 TOPIC_TO_IDS = {
-    "question": [
-        '1908.06606',
-        '1704.05572',
-        '1905.08949',
-        '1808.09920',
-        '1603.01417',
-        '1808.03986',
-        '1907.08501',
-        '1603.07044',
-        '1903.00172',
-        '1912.01046',
-        '1909.00542',
-        '1811.08048',
-        '2004.02393',
-        '1703.06492',
-        '1607.06275',
-        '1703.04617'
-    ]
+    # "question": [ # Question Answering
+    #     '1908.06606', #part1
+    #     '1704.05572', #part1
+    #     '1905.08949', #part1
+    #     '1808.09920', #part1
+    #     '1603.01417', #part1
+    #     '1808.03986', #part1
+    #     '1907.08501',
+    #     '1603.07044',
+    #     '1903.00172',
+    #     '1912.01046',
+    #     '1909.00542',
+    #     '1811.08048',
+    #     '2004.02393',
+    #     '1703.06492',
+    #     '1607.06275',
+    #     '1703.04617'
+    # ],
+    "question": [ # Machine Translation
+        '1905.11901',
+        '1911.03310',
+        '1910.11471',
+        '1903.03467',
+        '1911.00069',
+        '2001.01589',
+        '1806.00722',
+        '1909.01013',
+        '1910.10408',
+        '1903.00058',
+        '2002.08899',
+        '2002.02427',
+        '1610.05243',
+        '1910.11768',
+        '1810.03459',
+        '1906.00378',
+    ],
+    # "question": [ # Semantic Analysis
+    #     '1808.05077',
+    #     '1912.05066',
+    #     '2001.07209',
+    #     '1911.12569',
+    #     '1904.07342',
+    #     '1910.04006',
+    #     '1807.07961',
+    #     '1803.07771',
+    #     '1611.09441',
+    #     '1704.00939',
+    #     '1801.02243',
+    #     '2004.03925',
+    #     '2003.04967',
+    #     '1904.09678',
+    #     '1710.01492',
+    #     '1909.00088'
+    # ]
 }
 
 SYSTEM_PROMPT_TEMPLATE = """\
@@ -73,6 +109,7 @@ class QASPERResource(Resource):
             papers.append(paper)
         self.papers = papers
     
+    # choose a random paper -> choose a random number of sections in that paper -> formulate a ctx out of them -> sample batch_size number of seed prompts -> get batch_size number of prompts from that ctx.
     async def sample_prompt(self, batch_size: int) -> tuple[str, List[str]]:
         paper: Paper = random.choice(self.papers)
         num_sections_per_paper = random.randint(1, len(paper.sections))
