@@ -1,0 +1,16 @@
+Checking GPU settings...
+No devices were found
+JobID=433543
+Partition=scholar-gpu
+NodeList=scholar-g000
+   Priority=108336 Nice=0 Account=gpu QOS=normal
+   Partition=scholar-gpu AllocNode:Sid=scholar-fe01:1700651
+   ReqTRES=cpu=4,mem=64G,node=1,billing=4
+   AllocTRES=cpu=6,mem=64G,node=1,billing=6
+Running 1 configs
+2026-03-19 14:35:39,405 - cartridges.synthesize [rank=0] - INFO - Generating dataset with run dir: /home/vo43/cartridges/outputs/2026-03-19-14-35-39-arxiv_synthesize/arxiv_synthesize_qasper_n8192_1024_cartridge_on_QA_task-0
+2026-03-19 14:35:46,057 - cartridges.synthesize [rank=0] - INFO - Resuming synthesis: 0 batches already completed, 512 remaining
+2026-03-19 14:35:46,057 - cartridges.synthesize [rank=0] - INFO - Instantiating convo generator...
+[1;34mwandb[0m: 
+[1;34mwandb[0m: 🚀 View run [33marxiv_synthesize_qasper_n8192_1024_cartridge_on_QA_task[0m at: [34mhttps://wandb.ai/vqtri-purdue-university/SEACrowd/runs/uuzy7sq4[0m
+[1;34mwandb[0m: Find logs at: [1;35mwandb/run-20260319_143540-uuzy7sq4/logs[0m

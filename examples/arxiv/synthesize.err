@@ -1,0 +1,54 @@
+
+CondaError: Run 'conda init' before 'conda activate'
+
+/home/vo43/.conda/envs/cartridges/lib/python3.12/site-packages/transformers/utils/hub.py:111: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+wandb: [wandb.login()] Loaded credentials for https://api.wandb.ai from /home/vo43/.netrc.
+wandb: Currently logged in as: vqtri (vqtri-purdue-university) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run uuzy7sq4
+wandb: Tracking run with wandb version 0.24.0
+wandb: Run data is saved locally in /home/vo43/cartridges/examples/arxiv/wandb/run-20260319_143540-uuzy7sq4
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run arxiv_synthesize_qasper_n8192_1024_cartridge_on_QA_task
+wandb: ⭐️ View project at https://wandb.ai/vqtri-purdue-university/SEACrowd
+wandb: 🚀 View run at https://wandb.ai/vqtri-purdue-university/SEACrowd/runs/uuzy7sq4
+wandb: Detected [openai] in use.
+wandb: Use W&B Weave for improved LLM call tracing. Install Weave with `pip install weave` then add `import weave` to the top of your script.
+wandb: For more information, check out the docs at: https://weave-docs.wandb.ai/
+Traceback (most recent call last):
+  File "/home/vo43/cartridges/examples/arxiv/arxiv_synthesize.py", line 77, in <module>
+    pydrantic.main([config])
+  File "/home/vo43/.conda/envs/cartridges/lib/python3.12/site-packages/pydrantic/cli.py", line 106, in main
+    out = config.run()
+          ^^^^^^^^^^^^
+  File "/home/vo43/cartridges/cartridges/synthesize.py", line 98, in run
+    all_rows: list[Conversation] = asyncio.run(
+                                   ^^^^^^^^^^^^
+  File "/home/vo43/.conda/envs/cartridges/lib/python3.12/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/home/vo43/.conda/envs/cartridges/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vo43/.conda/envs/cartridges/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/vo43/cartridges/cartridges/synthesize.py", line 176, in _run_async_batches_with_queue
+    synthesizer = self.synthesizer.instantiate()
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vo43/.conda/envs/cartridges/lib/python3.12/site-packages/pydrantic/config.py", line 213, in instantiate
+    return target(self, *args, **self.kwargs, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vo43/cartridges/cartridges/synthesizers/self_study.py", line 68, in __init__
+    self.client = self.config.client.instantiate()
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vo43/cartridges/cartridges/clients/base.py", line 24, in instantiate
+    return super().instantiate(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vo43/.conda/envs/cartridges/lib/python3.12/site-packages/pydrantic/config.py", line 213, in instantiate
+    return target(self, *args, **self.kwargs, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/vo43/cartridges/cartridges/clients/tokasaurus.py", line 74, in __init__
+    raise ValueError("No cartridges provided")
+ValueError: No cartridges provided
+/var/spool/slurm/job433543/slurm_script: line 40: /devnull: Permission denied
