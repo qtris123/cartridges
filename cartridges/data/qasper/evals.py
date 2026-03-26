@@ -26,7 +26,8 @@ class QasperEvalDataset(CartridgePerplexityDataset):
         _pass_as_config = True
         
         #dataset: str = "sabrieyuboglu/qasper-rewrite-gpt-4.1" # QA
-        dataset: str = "qtris123/qtris123qasper-rewrite-gpt-4.1-MT-task" #MT
+        #dataset: str = "qtris123/qtris123qasper-rewrite-gpt-4.1-MT-task" #MT
+        dataset: str = "qtris123/qtris123qasper-rewrite-gpt-4.1-SA-task" #SA
         topic: Literal["question"]
 
 
