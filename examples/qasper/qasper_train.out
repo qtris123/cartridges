@@ -1,5 +1,5 @@
 Checking GPU settings...
-Wed Feb 18 23:57:20 2026       
+Wed Mar 25 07:56:57 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 575.57.08              Driver Version: 575.57.08      CUDA Version: 12.9     |
 |-----------------------------------------+------------------------+----------------------+
@@ -8,11 +8,11 @@ Wed Feb 18 23:57:20 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  NVIDIA A40                     Off |   00000000:3B:00.0 Off |                    0 |
-|  0%   40C    P8             22W /  300W |       0MiB /  46068MiB |      0%      Default |
+|  0%   50C    P8             23W /  300W |       0MiB /  46068MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 |   1  NVIDIA A40                     Off |   00000000:AF:00.0 Off |                    0 |
-|  0%   39C    P8             26W /  300W |       0MiB /  46068MiB |      0%      Default |
+|  0%   50C    P8             22W /  300W |       0MiB /  46068MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
                                                                                          
@@ -23,10 +23,170 @@ Wed Feb 18 23:57:20 2026
 |=========================================================================================|
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
-JobID=423029
+JobID=435583
 Partition=scholar-gpu
-NodeList=scholar-j002
-   Priority=116689 Nice=0 Account=gpu QOS=normal
-   Partition=scholar-gpu AllocNode:Sid=scholar-fe01:1532182
+NodeList=scholar-j000
+   Priority=108337 Nice=0 Account=gpu QOS=normal
+   Partition=scholar-gpu AllocNode:Sid=scholar-fe01:3776542
    ReqTRES=cpu=4,mem=128G,node=1,billing=4,gres/gpu=2
    AllocTRES=cpu=12,mem=128G,node=1,billing=12,gres/gpu=2
+Running 1 configs
+Running 1 configs
+2026-03-25 07:57:16,207 - cartridges.train [rank=1] - INFO - [Rank 1] initialized.
+2026-03-25 07:57:16,207 - cartridges.train [rank=0] - INFO - [Rank 0] initialized.
+2026-03-25 07:57:16,207 - cartridges.train [rank=1] - INFO - Global batch size: 32
+2026-03-25 07:57:16,207 - cartridges.train [rank=1] - INFO - Num devices: 2
+2026-03-25 07:57:16,207 - cartridges.train [rank=0] - INFO - Global batch size: 32
+2026-03-25 07:57:16,208 - cartridges.train [rank=1] - INFO - Train outputs will be saved to /home/vo43/cartridges/outputs/2026-03-25-07-57-15-arxiv_train/7790ae1b-5a9f-411c-94d6-f13627955d85
+2026-03-25 07:57:16,208 - cartridges.train [rank=0] - INFO - Num devices: 2
+2026-03-25 07:57:16,208 - cartridges.train [rank=0] - INFO - Train outputs will be saved to /home/vo43/cartridges/outputs/2026-03-25-07-57-15-arxiv_train/2f3cf1a0-185a-4f26-ac78-5466b008b601
+2026-03-25 07:57:19,737 - cartridges.train [rank=0] - INFO - Training dataset size: 2779 batches
+2026-03-25 07:57:19,738 - cartridges.train [rank=0] - INFO - Fininshed loading training dataset from disk, took 2.97s
+2026-03-25 07:57:19,770 - cartridges.train [rank=1] - INFO - Training dataset size: 2779 batches
+2026-03-25 07:57:19,771 - cartridges.train [rank=1] - INFO - Fininshed loading training dataset from disk, took 3.01s
+2026-03-25 07:57:20,421 - cartridges.train [rank=0] - INFO - Finished loading eval and generate datasets from disk, took 3.7s
+2026-03-25 07:57:20,421 - cartridges.train [rank=1] - INFO - Finished loading eval and generate datasets from disk, took 3.7s
+2026-03-25 07:57:50,719 - cartridges.train [rank=1] - INFO - Using custom prefix tuning (TrainableCache)
+2026-03-25 07:57:51,048 - cartridges.train [rank=0] - INFO - Using custom prefix tuning (TrainableCache)
+2026-03-25 07:58:14,354 - cartridges.cache [rank=0] - INFO - num_trainable_tokens: 1023
+2026-03-25 07:58:14,354 - cartridges.cache [rank=0] - INFO - num_frozen_tokens: 1
+2026-03-25 07:58:14,354 - cartridges.train [rank=0] - INFO - Done loading trainable cache, time: 23.31s
+2026-03-25 07:58:14,355 - cartridges.cache [rank=1] - INFO - num_trainable_tokens: 1023
+2026-03-25 07:58:14,355 - cartridges.cache [rank=1] - INFO - num_frozen_tokens: 1
+2026-03-25 07:58:14,355 - cartridges.train [rank=1] - INFO - Done loading trainable cache, time: 23.64s
+2026-03-25 07:58:14,409 - cartridges.train [rank=0] - INFO - Wrapping model in DDP
+2026-03-25 07:58:14,409 - cartridges.train [rank=0] - INFO - local_rank: 0
+2026-03-25 07:58:14,410 - cartridges.train [rank=1] - INFO - Wrapping model in DDP
+2026-03-25 07:58:14,410 - cartridges.train [rank=1] - INFO - local_rank: 1
+2026-03-25 07:58:17,354 - cartridges.train [rank=0] - INFO - Starting training
+2026-03-25 07:58:17,354 - cartridges.train [rank=1] - INFO - Starting training
+2026-03-25 07:58:17,356 - cartridges.train [rank=1] - INFO - Dataloader length: 1390
+2026-03-25 07:58:17,380 - cartridges.train [rank=1] - INFO - Generation evluation at step 0
+2026-03-25 07:58:17,395 - cartridges.train [rank=1] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 07:58:17,395 - cartridges.train [rank=1] - INFO - DDP rank 1: processing 50 prompts
+2026-03-25 07:58:17,395 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 07:58:19,252 - cartridges.train [rank=0] - INFO - Setup wandb with model stats: {'num_model_params': 4097965568, 'num_trainable_params': 75423744, 'num_trainable_tokens': 1023, 'cache_trainable_params': 75423744}
+2026-03-25 07:58:19,253 - cartridges.train [rank=0] - INFO - Dataloader length: 1390
+2026-03-25 07:58:19,254 - cartridges.train [rank=0] - INFO - Generation evluation at step 0
+2026-03-25 07:58:19,256 - cartridges.train [rank=0] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 07:58:19,256 - cartridges.train [rank=0] - INFO - DDP rank 0: processing 50 prompts
+2026-03-25 07:58:19,256 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 07:59:00,296 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 07:59:01,649 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 07:59:33,153 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 07:59:34,166 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:00:06,856 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:00:07,721 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:00:37,052 - cartridges.train [rank=1] - INFO - Generated 50 samples
+2026-03-25 08:00:37,951 - cartridges.train [rank=0] - INFO - Generated 50 samples
+2026-03-25 08:00:37,974 - cartridges.train [rank=0] - WARNING - There are duplicate convo_ids in the generation results, dropping duplicates rows.
+2026-03-25 08:00:37,977 - cartridges.train [rank=0] - INFO - {'generate_longhealth_accuracy/score': np.float64(0.18)}
+2026-03-25 08:04:57,176 - cartridges.train [rank=1] - INFO - Generation evluation at step 240
+2026-03-25 08:04:57,177 - cartridges.train [rank=1] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 08:04:57,177 - cartridges.train [rank=1] - INFO - DDP rank 1: processing 50 prompts
+2026-03-25 08:04:57,177 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:04:57,178 - cartridges.train [rank=0] - INFO - Generation evluation at step 240
+2026-03-25 08:04:57,178 - cartridges.train [rank=0] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 08:04:57,179 - cartridges.train [rank=0] - INFO - DDP rank 0: processing 50 prompts
+2026-03-25 08:04:57,179 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:05:29,822 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:05:30,320 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:06:02,243 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:06:02,578 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:06:35,280 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:06:35,693 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:07:05,667 - cartridges.train [rank=0] - INFO - Generated 50 samples
+2026-03-25 08:07:05,803 - cartridges.train [rank=1] - INFO - Generated 50 samples
+2026-03-25 08:07:05,810 - cartridges.train [rank=0] - WARNING - There are duplicate convo_ids in the generation results, dropping duplicates rows.
+2026-03-25 08:07:05,812 - cartridges.train [rank=0] - INFO - {'generate_longhealth_accuracy/score': np.float64(0.31)}
+2026-03-25 08:09:56,807 - cartridges.train [rank=1] - INFO - Generation evluation at step 480
+2026-03-25 08:09:56,807 - cartridges.train [rank=1] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 08:09:56,807 - cartridges.train [rank=1] - INFO - DDP rank 1: processing 50 prompts
+2026-03-25 08:09:56,808 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:09:56,808 - cartridges.train [rank=0] - INFO - Generation evluation at step 480
+2026-03-25 08:09:56,809 - cartridges.train [rank=0] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 08:09:56,809 - cartridges.train [rank=0] - INFO - DDP rank 0: processing 50 prompts
+2026-03-25 08:09:56,810 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:10:29,260 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:10:29,792 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:11:01,564 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:11:02,142 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:11:34,672 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:11:35,366 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:12:08,346 - cartridges.train [rank=1] - INFO - Generated 50 samples
+2026-03-25 08:12:09,189 - cartridges.train [rank=0] - INFO - Generated 50 samples
+2026-03-25 08:12:09,195 - cartridges.train [rank=0] - WARNING - There are duplicate convo_ids in the generation results, dropping duplicates rows.
+2026-03-25 08:12:09,196 - cartridges.train [rank=0] - INFO - {'generate_longhealth_accuracy/score': np.float64(0.38)}
+2026-03-25 08:14:59,809 - cartridges.train [rank=1] - INFO - Generation evluation at step 720
+2026-03-25 08:14:59,809 - cartridges.train [rank=1] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 08:14:59,809 - cartridges.train [rank=1] - INFO - DDP rank 1: processing 50 prompts
+2026-03-25 08:14:59,810 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:14:59,810 - cartridges.train [rank=0] - INFO - Generation evluation at step 720
+2026-03-25 08:14:59,810 - cartridges.train [rank=0] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 08:14:59,810 - cartridges.train [rank=0] - INFO - DDP rank 0: processing 50 prompts
+2026-03-25 08:14:59,811 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:15:32,245 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:15:32,796 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:16:04,907 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:16:05,243 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:16:37,872 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:16:38,425 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:17:08,060 - cartridges.train [rank=1] - INFO - Generated 50 samples
+2026-03-25 08:17:08,231 - cartridges.train [rank=0] - INFO - Generated 50 samples
+2026-03-25 08:17:08,236 - cartridges.train [rank=0] - WARNING - There are duplicate convo_ids in the generation results, dropping duplicates rows.
+2026-03-25 08:17:08,237 - cartridges.train [rank=0] - INFO - {'generate_longhealth_accuracy/score': np.float64(0.33)}
+2026-03-25 08:19:58,853 - cartridges.train [rank=1] - INFO - Generation evluation at step 960
+2026-03-25 08:19:58,853 - cartridges.train [rank=1] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 08:19:58,853 - cartridges.train [rank=1] - INFO - DDP rank 1: processing 50 prompts
+2026-03-25 08:19:58,853 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:19:58,854 - cartridges.train [rank=0] - INFO - Generation evluation at step 960
+2026-03-25 08:19:58,854 - cartridges.train [rank=0] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 08:19:58,854 - cartridges.train [rank=0] - INFO - DDP rank 0: processing 50 prompts
+2026-03-25 08:19:58,855 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:20:31,485 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:20:31,758 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:21:03,724 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:21:03,936 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:21:36,455 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:21:37,319 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:21:51,999 - cartridges.train [rank=1] - INFO - Generated 50 samples
+2026-03-25 08:22:06,672 - cartridges.train [rank=0] - INFO - Generated 50 samples
+2026-03-25 08:22:06,679 - cartridges.train [rank=0] - WARNING - There are duplicate convo_ids in the generation results, dropping duplicates rows.
+2026-03-25 08:22:06,680 - cartridges.train [rank=0] - INFO - {'generate_longhealth_accuracy/score': np.float64(0.36)}
+2026-03-25 08:24:56,984 - cartridges.train [rank=1] - INFO - Generation evluation at step 1200
+2026-03-25 08:24:56,985 - cartridges.train [rank=1] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 08:24:56,985 - cartridges.train [rank=1] - INFO - DDP rank 1: processing 50 prompts
+2026-03-25 08:24:56,985 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:24:56,986 - cartridges.train [rank=0] - INFO - Generation evluation at step 1200
+2026-03-25 08:24:56,986 - cartridges.train [rank=0] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 08:24:56,986 - cartridges.train [rank=0] - INFO - DDP rank 0: processing 50 prompts
+2026-03-25 08:24:56,987 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:25:29,370 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:25:30,233 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:26:02,083 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:26:02,200 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:26:35,226 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:26:35,424 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:27:05,127 - cartridges.train [rank=1] - INFO - Generated 50 samples
+2026-03-25 08:27:05,209 - cartridges.train [rank=0] - INFO - Generated 50 samples
+2026-03-25 08:27:05,215 - cartridges.train [rank=0] - WARNING - There are duplicate convo_ids in the generation results, dropping duplicates rows.
+2026-03-25 08:27:05,217 - cartridges.train [rank=0] - INFO - {'generate_longhealth_accuracy/score': np.float64(0.32)}
+2026-03-25 08:29:20,038 - cartridges.train [rank=1] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 08:29:20,038 - cartridges.train [rank=1] - INFO - DDP rank 1: processing 50 prompts
+2026-03-25 08:29:20,038 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:29:20,405 - cartridges.train [rank=0] - INFO - Saving cache to wandb: cache-step86.pt
+2026-03-25 08:29:20,409 - cartridges.train [rank=0] - INFO - Generating `longhealth_accuracy` (n=100, 50 per device)
+2026-03-25 08:29:20,409 - cartridges.train [rank=0] - INFO - DDP rank 0: processing 50 prompts
+2026-03-25 08:29:20,410 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:29:52,480 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:29:53,361 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:30:25,483 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:30:25,984 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:30:58,436 - cartridges.train [rank=1] - INFO - Generating sample 0 of 1
+2026-03-25 08:30:58,541 - cartridges.train [rank=0] - INFO - Generating sample 0 of 1
+2026-03-25 08:31:28,102 - cartridges.train [rank=1] - INFO - Generated 50 samples
+2026-03-25 08:31:28,923 - cartridges.train [rank=0] - INFO - Generated 50 samples
+2026-03-25 08:31:28,930 - cartridges.train [rank=0] - WARNING - There are duplicate convo_ids in the generation results, dropping duplicates rows.
+2026-03-25 08:31:28,932 - cartridges.train [rank=0] - INFO - {'generate_longhealth_accuracy/score': np.float64(0.33)}
+2026-03-25 08:31:29,146 - cartridges.train [rank=1] - INFO - Done training waiting for final barrier.
+2026-03-25 08:31:29,146 - cartridges.train [rank=0] - INFO - Done training waiting for final barrier.
