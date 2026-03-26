@@ -601,25 +601,51 @@ def evaluate_perplexity(
                     * topk_pred_logprobs  # q(x), model distr
                 )
 
-                epoch_loss += (ce_by_token.sum())
+                # epoch_loss += (ce_by_token.sum())
+                # epoch_denom += ce_by_token.shape[0]
+                batch_loss = ce_by_token.sum()
+                epoch_loss += batch_loss.item()
                 epoch_denom += ce_by_token.shape[0]
+
+                # Store result for W&B table (Rank 0 only)
+                results.append({
+                    "loss": batch_loss.item() / ce_by_token.shape[0],
+                    "step": optimizer_step,
+                    "batch_idx": num_batches_processed
+                })
 
             if cache_tuning:
                 assert cache is not None
                 cache.clear()
 
             del outputs
+            # num_batches_processed += 1
+            num_batches_processed += 1
 
-            if is_ddp:
-                dist.all_reduce(epoch_loss, op=dist.ReduceOp.SUM)
-                dist.all_reduce(epoch_denom, op=dist.ReduceOp.SUM)
-                dist.all_reduce(epoch_num_system_and_user_tokens, op=dist.ReduceOp.SUM)
-                dist.all_reduce(epoch_num_assistant_tokens, op=dist.ReduceOp.SUM)
-                dist.all_reduce(epoch_num_elements, op=dist.ReduceOp.SUM)
+        if is_ddp:
+            # Move all_reduce OUTSIDE the loop to avoid double-counting
+            # Original code (which was inside the loop):
+            # dist.all_reduce(epoch_loss, op=dist.ReduceOp.SUM)
+            # dist.all_reduce(epoch_denom, op=dist.ReduceOp.SUM)
+            # dist.all_reduce(epoch_num_system_and_user_tokens, op=dist.ReduceOp.SUM)
+            # dist.all_reduce(epoch_num_assistant_tokens, op=dist.ReduceOp.SUM)
+            # dist.all_reduce(epoch_num_elements, op=dist.ReduceOp.SUM)
+            
+            # Revised code:
+            loss_tensor = torch.tensor(epoch_loss, device="cuda")
+            dist.all_reduce(loss_tensor, op=dist.ReduceOp.SUM)
+            epoch_loss = loss_tensor.item()
+            
+            dist.all_reduce(epoch_denom, op=dist.ReduceOp.SUM)
+            dist.all_reduce(epoch_num_system_and_user_tokens, op=dist.ReduceOp.SUM)
+            dist.all_reduce(epoch_num_assistant_tokens, op=dist.ReduceOp.SUM)
+            dist.all_reduce(epoch_num_elements, op=dist.ReduceOp.SUM)
 
         if is_ddp:
             dist.barrier()
-        logger.info(f"Eval loss - {epoch_loss / epoch_denom} ")
+        # logger.info(f"Eval loss - {epoch_loss / epoch_denom} ")
+        avg_loss = epoch_loss / epoch_denom.item() if epoch_denom.item() > 0 else 0
+        logger.info(f"Eval loss - {avg_loss} ")
 
     if is_ddp:
         gathered_results = [None for _ in range(dist.get_world_size())]
@@ -637,18 +663,30 @@ def evaluate_perplexity(
             macro_loss = None
             macro_perplexity = None
 
+        # wandb.log(
+        #     {
+        #         f"{prefix}/loss": epoch_loss / epoch_denom,
+        #         f"{prefix}/perplexity": math.exp(epoch_loss / epoch_denom),
+        #         f"{prefix}/macro_loss": macro_loss,
+        #         f"{prefix}/macro_perplexity": macro_perplexity,
+        #         f"{prefix}/table": pd.DataFrame(results),
+        #         f"{prefix}/num_system_and_user_tokens": epoch_num_system_and_user_tokens
+        #         / epoch_num_elements,
+        #         f"{prefix}/num_assistant_tokens": epoch_num_assistant_tokens
+        #         / epoch_num_elements,
+        #         f"{prefix}/num_elements": epoch_num_elements,
+        #     },
+        #     step=optimizer_step,
+        # )
+        avg_loss = epoch_loss / epoch_denom.item() if epoch_denom.item() > 0 else 0
         wandb.log(
             {
-                f"{prefix}/loss": epoch_loss / epoch_denom,
-                f"{prefix}/perplexity": math.exp(epoch_loss / epoch_denom),
+                f"{prefix}/loss": avg_loss,
+                f"{prefix}/perplexity": math.exp(avg_loss),
                 f"{prefix}/macro_loss": macro_loss,
                 f"{prefix}/macro_perplexity": macro_perplexity,
                 f"{prefix}/table": pd.DataFrame(results),
-                f"{prefix}/num_system_and_user_tokens": epoch_num_system_and_user_tokens
-                / epoch_num_elements,
-                f"{prefix}/num_assistant_tokens": epoch_num_assistant_tokens
-                / epoch_num_elements,
-                f"{prefix}/num_elements": epoch_num_elements,
+                f"{prefix}/num_elements": epoch_num_elements.item(),
             },
             step=optimizer_step,
         )
