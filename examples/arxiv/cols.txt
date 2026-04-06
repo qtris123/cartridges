@@ -1,1 +1,0 @@
-['paper_id', 'title', 'abstract', 'question', 'answer', 'old_answer', 'old_question']

@@ -69,7 +69,6 @@ class TokasaurusClient(Client):
 
         if self.config.cartridges is not None:
             self.cartridges = [c.model_dump() for c in self.config.cartridges]
-            print("Cartridges from tokasaurus.py: ", self.cartridges)
         else:
             self.cartridges = None
 
@@ -89,7 +88,7 @@ class TokasaurusClient(Client):
                 import pickle
                 t0 = time.time()
                 async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=timeout)) as session:
-                    endpoint = "/custom/synchronous-batch-completions" if not use_cartridge_endpoint else "/custom/cartridge/synchronous-batch-completions" #"/batch/cartridge/chat/completions"
+                    endpoint = "/custom/synchronous-batch-completions" if not use_cartridge_endpoint else "/custom/cartridge/synchronous-batch-completions"
                     async with session.post(
                         f"{self.config.url}{endpoint}",
                         json={"requests": requests},

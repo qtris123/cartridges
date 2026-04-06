@@ -80,6 +80,7 @@ class KVFromPretrained(KVCacheFactory):
         is_rank_zero = (not is_ddp) or (dist.get_rank() == 0)
 
         logger.info(f"Restoring cache from wandb run {self.config.wandb_run_id}")
+        filename = ... 
 
         cache_files = _list_cache_files(self.config.wandb_run_id)
         if len(cache_files) == 0:
@@ -100,7 +101,7 @@ class KVFromPretrained(KVCacheFactory):
         if not path.exists():
             logger.info(f"Downloading cache from wandb run {self.config.wandb_run_id} to {cache_dir}")
             if is_rank_zero:
-                wandb.restore(
+                out = wandb.restore(
                     filename,
                     run_path=self.config.wandb_run_id,
                     root=cache_dir,
@@ -108,8 +109,8 @@ class KVFromPretrained(KVCacheFactory):
         if is_ddp:
             dist.barrier()
 
-        logger.info(f"Loading cache from {path}")
+        logger.info(f"Loading cache from {cache_dir / filename}")
         cache = TrainableCache.from_pretrained(
-            str(path), device="cuda", weights_only=False
+            str(cache_dir / filename), device="cuda"
         )
         return cache

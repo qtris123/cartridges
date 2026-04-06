@@ -113,8 +113,6 @@ class SynthesizeConfig(RunConfig):
         logger.info(f"Final output saved to {final_output_path}")
 
         if self.upload_to_wandb:
-            # Sanitize artifact name: replace invalid characters with underscores
-            # Wandb allows only alphanumeric characters, dashes, underscores, and dots
             import re
             sanitized_name = re.sub(r'[^a-zA-Z0-9_\-.]', '_', self.name)
             artifact = wandb.Artifact(name=sanitized_name, type="dataset")
@@ -140,11 +138,9 @@ class SynthesizeConfig(RunConfig):
         """Run batches using a queue for better control."""
         all_rows: list[Conversation] = []
         
-        # Setup checkpoint directory
         checkpoint_dir = self.run_dir / "checkpoints"
         checkpoint_dir.mkdir(exist_ok=True)
         
-        # Load existing checkpoints and resume from where we left off
         completed_batch_indices = set()
         if checkpoint_dir.exists():
             import pandas as pd
@@ -153,7 +149,6 @@ class SynthesizeConfig(RunConfig):
                     batch_idx = int(checkpoint_file.stem.split("_")[1])
                     completed_batch_indices.add(batch_idx)
                     
-                    # Load checkpoint data
                     df = pd.read_parquet(checkpoint_file)
                     batch_rows = [Conversation.from_dict(row) for _, row in df.iterrows()]
                     all_rows.extend(batch_rows)
@@ -169,7 +164,6 @@ class SynthesizeConfig(RunConfig):
         for batch_idx in batches_to_process:
             batch_queue.put_nowait(batch_idx)
         
-        # Results queue
         results_queue = asyncio.Queue()
         
         logger.info(f"Instantiating convo generator...")

@@ -50,11 +50,7 @@ config = TrainConfig(
 
     dataset=TrainDataset.Config(
         data_sources=[
-            #DataSource(path="/scratch/scholar/vo43/qasper-MT_8192_on-policy.parquet", type="local"), # qasper MT task, p = 1024, n = 10240
-            #DataSource(path="/home/vo43/cartridges/outputs/2026-03-15-19-50-30-qasper_synthesize_with_server/a90f2266-9d1a-4001-9523-3fc38bae0976/artifact/dataset.parquet", type="local"), # qasper QA task, p = 1024, n = 8192
-            #DataSource(path="/scratch/scholar/vo43/qasper_llama3B_part1_task_A_B.parquet", type="local"),
-            #DataSource(path="/scratch/scholar/vo43/qasper_65520.parquet", type="local"),
-            #DataSource(path="/scratch/scholar/vo43/llama_0_mtob.parquet", type="local"),    
+            #DataSource(path="/home/phudishp/cartridges/outputs/2026-02-08-06-27-11-arxiv_synthesize/arxiv_synthesize_meta-llama/Llama-3.2-3B-Instruct_n256-0/artifact/dataset.parquet", type="local"),
             DataSource(path="/scratch/scholar/vo43/longhealth_p1-10_qwen_n8192.parquet", type="local"),
         ],
         top_k_logits=20,
